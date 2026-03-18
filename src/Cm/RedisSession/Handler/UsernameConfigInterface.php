@@ -34,8 +34,6 @@ interface UsernameConfigInterface extends ConfigInterface
 {
     /**
      * Get optional username
-     *
-     * @return string|null
      */
     public function getUsername() : ?string;
 }

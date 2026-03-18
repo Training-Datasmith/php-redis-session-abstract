@@ -34,8 +34,6 @@ interface ClusterConfigInterface extends ConfigInterface
 {
     /**
      * Is this a cluster?
-     *
-     * @return bool
      */
     public function isCluster() : bool;
 
@@ -55,8 +53,6 @@ interface ClusterConfigInterface extends ConfigInterface
 
     /**
      * Should we use persistent connection?
-     *
-     * @return bool
      */
     public function getClusterUsePersistentConnection() : bool;
 }

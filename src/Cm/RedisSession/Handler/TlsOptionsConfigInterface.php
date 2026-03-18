@@ -34,8 +34,6 @@ interface TlsOptionsConfigInterface extends ConfigInterface
 {
     /**
      * Get optional TLS options
-     *
-     * @return array|null
      */
     public function getTlsOptions() : ?array;
 }

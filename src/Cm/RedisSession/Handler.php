@@ -169,14 +169,8 @@ class Handler implements \SessionHandlerInterface
      */
     protected $_redis;
 
-    /**
-     * @var bool
-     */
     protected readonly bool $_usePipeline;
 
-    /**
-     * @var bool
-     */
     protected readonly bool $_useCluster;
 
     /**
@@ -209,10 +203,7 @@ class Handler implements \SessionHandlerInterface
      */
     protected $_failAfter;
 
-    /**
-     * @var boolean
-     */
-    protected $_useLocking;
+    protected bool $_useLocking;
 
     /**
      * @var boolean
@@ -250,15 +241,9 @@ class Handler implements \SessionHandlerInterface
      */
     protected $failedLockAttempts = 0;
 
-    /**
-     * @var ConfigInterface
-     */
-    protected $config;
+    protected \Cm\RedisSession\Handler\ConfigInterface $config;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected \Cm\RedisSession\Handler\LoggerInterface $logger;
 
     /**
      * @var int
@@ -266,7 +251,7 @@ class Handler implements \SessionHandlerInterface
     protected $_lifeTime;
 
     /** @var null|array Callback method to call. It will receive 2 parameters: $userAgent, $isBot */
-    static public $_botCheckCallback = null;
+    static public $_botCheckCallback;
 
     /**
      * @var boolean
@@ -274,8 +259,6 @@ class Handler implements \SessionHandlerInterface
     private $_readOnly;
 
     /**
-     * @param ConfigInterface $config
-     * @param LoggerInterface $logger
      * @param boolean $readOnly
      * @throws ConnectionFailedException
      */
@@ -465,10 +448,8 @@ class Handler implements \SessionHandlerInterface
 
     /**
      * Check Redis connection
-     *
-     * @return bool
      */
-    protected function hasConnection()
+    protected function hasConnection(): bool
     {
         try {
             $this->_redis->connect();
@@ -485,9 +466,8 @@ class Handler implements \SessionHandlerInterface
      * Set/unset read only flag
      *
      * @param boolean $readOnly
-     * @return self
      */
-    public function setReadOnly($readOnly)
+    public function setReadOnly($readOnly): self
     {
         $this->_readOnly = $readOnly;
 
@@ -584,8 +564,8 @@ class Handler implements \SessionHandlerInterface
                             . 'requests) - Locked URL: %s',
                             $sessionId,
                             $waiting,
-                            isset($sessionInfo['writes']) ? $sessionInfo['writes'] : '-',
-                            isset($sessionInfo['req']) ? $sessionInfo['req'] : '-'
+                            $sessionInfo['writes'] ?? '-',
+                            $sessionInfo['req'] ?? '-'
                         ),
                         LoggerInterface::WARNING
                     );
@@ -656,7 +636,7 @@ class Handler implements \SessionHandlerInterface
 
         // Session can be read even if it was not locked by this pid!
         $timeStart2 = microtime(true);
-        list($sessionData, $sessionWrites) = array_values($this->_redis->hMGet($sessionId, array('data','writes')));
+        [$sessionData, $sessionWrites] = array_values($this->_redis->hMGet($sessionId, ['data','writes']));
         $this->_log(sprintf("Data read for ID %s in %.5f seconds", $sessionId, (microtime(true) - $timeStart2)));
         $this->_sessionWrites = (int) $sessionWrites;
 
@@ -667,10 +647,10 @@ class Handler implements \SessionHandlerInterface
 
         // This process has the lock, save the pid
         if ($this->_hasLock) {
-            $setData = array(
+            $setData = [
                 'pid' => $this->_getPid(),
                 'lock' => 1,
-            );
+            ];
 
             // Save request data in session so if a lock is broken we can know which page it was for debugging
             if (empty($_SERVER['REQUEST_METHOD'])) {
@@ -817,7 +797,7 @@ class Handler implements \SessionHandlerInterface
         $isBot = !$userAgent || preg_match(self::BOT_REGEX, $userAgent);
 
         if (is_array(self::$_botCheckCallback) && isset(self::$_botCheckCallback[0]) && self::$_botCheckCallback[1] && method_exists(self::$_botCheckCallback[0], self::$_botCheckCallback[1])) {
-            $isBot = (bool) call_user_func_array(self::$_botCheckCallback, [$userAgent, $isBot]);
+            return (bool) call_user_func_array(self::$_botCheckCallback, [$userAgent, $isBot]);
         }
 
         return $isBot;
@@ -936,17 +916,17 @@ class Handler implements \SessionHandlerInterface
      * @param $lifetime
      * @throws \Exception
      */
-    protected function _writeRawSession($id, $data, $lifetime)
+    protected function _writeRawSession(string $id, $data, $lifetime)
     {
         $sessionId = 'sess_' . $id;
         if ($this->_usePipeline) {
             $this->_redis->pipeline();
         }
         if (!$this->_useCluster) $this->_redis->select($this->_dbNum);
-        $this->_redis->hMSet($sessionId, array(
+        $this->_redis->hMSet($sessionId, [
                 'data' => $this->_encodeData($data),
                 'lock' => 0, // 0 so that next lock attempt will get 1
-            ));
+            ]);
         $this->_redis->hIncrBy($sessionId, 'writes', 1);
         $this->_redis->expire($sessionId, min((int)$lifetime, (int)$this->_maxLifetime));
         if ($this->_usePipeline) {
@@ -956,10 +936,8 @@ class Handler implements \SessionHandlerInterface
 
     /**
      * Get pid
-     *
-     * @return string
      */
-    protected function _getPid()
+    protected function _getPid(): string
     {
         return gethostname().'|'.getmypid();
     }
@@ -972,7 +950,7 @@ class Handler implements \SessionHandlerInterface
      */
     protected function _pidExists($pid)
     {
-        list($host,$pid) = explode('|', $pid);
+        [$host, $pid] = explode('|', $pid);
         if (PHP_OS != 'Linux' || $host != gethostname()) {
             return true;
         }

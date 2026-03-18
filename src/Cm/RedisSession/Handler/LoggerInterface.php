@@ -93,7 +93,6 @@ interface LoggerInterface
     /**
      * Log exception
      *
-     * @param \Exception $e
      * @return void
      */
     public function logException(\Exception $e);
