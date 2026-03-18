@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /*
 ==New BSD License==
 
@@ -28,6 +30,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 namespace Cm\RedisSession\Handler;
 
 interface LoggerInterface
@@ -35,42 +38,42 @@ interface LoggerInterface
     /**
      * Emergency: system is unusable
      */
-    const EMERGENCY     = 0;
+    public const EMERGENCY     = 0;
 
     /**
      * Alert: action must be taken immediately
      */
-    const ALERT         = 1;
+    public const ALERT         = 1;
 
     /**
      * Critical: critical conditions
      */
-    const CRITICAL      = 2;
+    public const CRITICAL      = 2;
 
     /**
      * Error: error conditions
      */
-    const ERROR         = 3;
+    public const ERROR         = 3;
 
     /**
      * Warning: warning conditions
      */
-    const WARNING       = 4;
+    public const WARNING       = 4;
 
     /**
      * Notice: normal but significant condition
      */
-    const NOTICE        = 5;
+    public const NOTICE        = 5;
 
     /**
      * Informational: informational messages
      */
-    const INFO          = 6;
+    public const INFO          = 6;
 
     /**
      * Debug: debug messages
      */
-    const DEBUG         = 7;
+    public const DEBUG         = 7;
 
     /**
      * Set log level

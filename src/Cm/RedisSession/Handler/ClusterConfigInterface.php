@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /*
 ==New BSD License==
 
@@ -28,6 +30,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 namespace Cm\RedisSession\Handler;
 
 interface ClusterConfigInterface extends ConfigInterface
@@ -35,24 +38,24 @@ interface ClusterConfigInterface extends ConfigInterface
     /**
      * Is this a cluster?
      */
-    public function isCluster() : bool;
+    public function isCluster(): bool;
 
     /**
      * Optional name for cluster as read in redis.ini
      *
      * @return bool
      */
-    public function getClusterName() : ?string;
+    public function getClusterName(): ?string;
 
     /**
      * Seeds for cluster
      *
      * @return bool
      */
-    public function getClusterSeeds() : ?array;
+    public function getClusterSeeds(): ?array;
 
     /**
      * Should we use persistent connection?
      */
-    public function getClusterUsePersistentConnection() : bool;
+    public function getClusterUsePersistentConnection(): bool;
 }

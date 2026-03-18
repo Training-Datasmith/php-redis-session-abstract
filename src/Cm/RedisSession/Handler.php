@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /*
 ==New BSD License==
 
@@ -28,6 +30,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 namespace Cm\RedisSession;
 
 /**
@@ -62,107 +65,107 @@ class Handler implements \SessionHandlerInterface
     /**
      * Sleep 0.5 seconds between lock attempts (1,000,000 == 1 second)
      */
-    const SLEEP_TIME         = 500000;
+    public const SLEEP_TIME         = 500000;
 
     /**
      * Try to detect zombies every this many tries
      */
-    const DETECT_ZOMBIES     = 20;
+    public const DETECT_ZOMBIES     = 20;
 
     /**
      * Session prefix
      */
-    const SESSION_PREFIX     = 'sess_';
+    public const SESSION_PREFIX     = 'sess_';
 
     /**
      * Bots get shorter session lifetimes
      */
-    const BOT_REGEX          = '/^alexa|^blitz\.io|bot|^browsermob|crawl|^curl|^facebookexternalhit|feed|google web preview|^ia_archiver|indexer|^java|jakarta|^libwww-perl|^load impact|^magespeedtest|monitor|^Mozilla$|nagios |^\.net|^pinterest|postrank|slurp|spider|uptime|^wget|yandex|^elb-healthchecker|binglocalsearch/i';
+    public const BOT_REGEX          = '/^alexa|^blitz\.io|bot|^browsermob|crawl|^curl|^facebookexternalhit|feed|google web preview|^ia_archiver|indexer|^java|jakarta|^libwww-perl|^load impact|^magespeedtest|monitor|^Mozilla$|nagios |^\.net|^pinterest|postrank|slurp|spider|uptime|^wget|yandex|^elb-healthchecker|binglocalsearch/i';
 
     /**
      * Default connection timeout
      */
-    const DEFAULT_TIMEOUT               = 2.5;
+    public const DEFAULT_TIMEOUT               = 2.5;
 
     /**
      * Default connection retries
      */
-    const DEFAULT_RETRIES               = 0;
+    public const DEFAULT_RETRIES               = 0;
 
     /**
      * Default compression threshold
      */
-    const DEFAULT_COMPRESSION_THRESHOLD = 2048;
+    public const DEFAULT_COMPRESSION_THRESHOLD = 2048;
 
     /**
      * Default compression library
      */
-    const DEFAULT_COMPRESSION_LIBRARY   = 'gzip';
+    public const DEFAULT_COMPRESSION_LIBRARY   = 'gzip';
 
     /**
      * Default log level
      */
-    const DEFAULT_LOG_LEVEL             = LoggerInterface::ALERT;
+    public const DEFAULT_LOG_LEVEL             = LoggerInterface::ALERT;
 
     /**
      * Maximum number of processes that can wait for a lock on one session
      */
-    const DEFAULT_MAX_CONCURRENCY       = 6;
+    public const DEFAULT_MAX_CONCURRENCY       = 6;
 
     /**
      * Try to break the lock after this many seconds
      */
-    const DEFAULT_BREAK_AFTER           = 30;
+    public const DEFAULT_BREAK_AFTER           = 30;
 
     /**
      * Try to break lock for at most this many seconds
      */
-    const DEFAULT_FAIL_AFTER            = 15;
+    public const DEFAULT_FAIL_AFTER            = 15;
 
     /**
      * The session lifetime for non-bots on the first write
      */
-    const DEFAULT_FIRST_LIFETIME        = 600;
+    public const DEFAULT_FIRST_LIFETIME        = 600;
 
     /**
      * The session lifetime for bots on the first write
      */
-    const DEFAULT_BOT_FIRST_LIFETIME    = 60;
+    public const DEFAULT_BOT_FIRST_LIFETIME    = 60;
 
     /**
      * The session lifetime for bots - shorter to prevent bots from wasting backend storage
      */
-    const DEFAULT_BOT_LIFETIME          = 7200;
+    public const DEFAULT_BOT_LIFETIME          = 7200;
 
     /**
      * Redis backend limit
      */
-    const DEFAULT_MAX_LIFETIME          = 2592000;
+    public const DEFAULT_MAX_LIFETIME          = 2592000;
 
     /**
      * Default min lifetime
      */
-    const DEFAULT_MIN_LIFETIME          = 60;
+    public const DEFAULT_MIN_LIFETIME          = 60;
 
     /**
      * Default host
      */
-    const DEFAULT_HOST                  = '127.0.0.1';
+    public const DEFAULT_HOST                  = '127.0.0.1';
 
     /**
      * Default port
      */
-    const DEFAULT_PORT                  = 6379;
+    public const DEFAULT_PORT                  = 6379;
 
     /**
      * Default database
      */
-    const DEFAULT_DATABASE              = 0;
+    public const DEFAULT_DATABASE              = 0;
 
     /**
      * Default lifetime
      */
-    const DEFAULT_LIFETIME              = 60;
+    public const DEFAULT_LIFETIME              = 60;
 
     /**
      * @var \Credis_Client|\Credis_Cluster
@@ -251,7 +254,7 @@ class Handler implements \SessionHandlerInterface
     protected $_lifeTime;
 
     /** @var null|array Callback method to call. It will receive 2 parameters: $userAgent, $isBot */
-    static public $_botCheckCallback;
+    public static $_botCheckCallback;
 
     /**
      * @var boolean
@@ -308,64 +311,71 @@ class Handler implements \SessionHandlerInterface
             $this->_usePipeline = true;
             $this->_useCluster = false;
             $servers = preg_split('/\s*,\s*/', trim($sentinelServers), -1, PREG_SPLIT_NO_EMPTY);
-            $sentinel = NULL;
-            $exception = NULL;
-            for ($i = 0; $i <= $sentinelConnectRetries; $i++) // Try to connect to sentinels in round-robin fashion
-            foreach ($servers as $server) {
-                try {
-                    $sentinelClient = new \Credis_Client($server, NULL, $timeout, $persistent);
-                    $sentinelClient->forceStandalone();
-                    $sentinelClient->setMaxConnectRetries(0);
-                    if ($sentinelPassword) {
-                        try {
-                            $sentinelClient->auth($sentinelPassword);
-                        } catch (\CredisException $e) {
-                            // Prevent throwing exception if Sentinel has no password set (error messages are different between redis 5 and redis 6)
-                            if ($e->getCode() !== 0 || (
-                                strpos($e->getMessage(), 'ERR Client sent AUTH, but no password is set') === false &&
-                                strpos($e->getMessage(), 'ERR AUTH <password> called without any password configured for the default user. Are you sure your configuration is correct?') === false)
-                            ) {
-                                throw $e;
+            $sentinel = null;
+            $exception = null;
+            for ($i = 0; $i <= $sentinelConnectRetries; $i++) { // Try to connect to sentinels in round-robin fashion
+                foreach ($servers as $server) {
+                    try {
+                        $sentinelClient = new \Credis_Client($server, null, $timeout, $persistent);
+                        $sentinelClient->forceStandalone();
+                        $sentinelClient->setMaxConnectRetries(0);
+                        if ($sentinelPassword) {
+                            try {
+                                $sentinelClient->auth($sentinelPassword);
+                            } catch (\CredisException $e) {
+                                // Prevent throwing exception if Sentinel has no password set (error messages are different between redis 5 and redis 6)
+                                if ($e->getCode() !== 0 || (
+                                    strpos($e->getMessage(), 'ERR Client sent AUTH, but no password is set') === false &&
+                                    strpos($e->getMessage(), 'ERR AUTH <password> called without any password configured for the default user. Are you sure your configuration is correct?') === false
+                                )
+                                ) {
+                                    throw $e;
+                                }
                             }
                         }
-                    }
 
-                    $sentinel = new \Credis_Sentinel($sentinelClient);
-                    $sentinel
-                        ->setClientTimeout($timeout)
-                        ->setClientPersistent($persistent);
-                    $redisMaster = $sentinel->getMasterClient($sentinelMaster);
-                    if ($pass) $redisMaster->auth($pass, $username);
+                        $sentinel = new \Credis_Sentinel($sentinelClient);
+                        $sentinel
+                            ->setClientTimeout($timeout)
+                            ->setClientPersistent($persistent);
+                        $redisMaster = $sentinel->getMasterClient($sentinelMaster);
+                        if ($pass) {
+                            $redisMaster->auth($pass, $username);
+                        }
 
-                    // Verify connected server is actually master as per Sentinel client spec
-                    if ($sentinelVerifyMaster) {
-                        $roleData = $redisMaster->role();
-                        if ( ! $roleData || $roleData[0] != 'master') {
-                            usleep(100000); // Sleep 100ms and try again
-                            $redisMaster = $sentinel->getMasterClient($sentinelMaster);
-                            if ($pass) $redisMaster->auth($pass, $username);
+                        // Verify connected server is actually master as per Sentinel client spec
+                        if ($sentinelVerifyMaster) {
                             $roleData = $redisMaster->role();
-                            if ( ! $roleData || $roleData[0] != 'master') {
-                                throw new \Exception('Unable to determine master redis server.');
+                            if (! $roleData || $roleData[0] != 'master') {
+                                usleep(100000); // Sleep 100ms and try again
+                                $redisMaster = $sentinel->getMasterClient($sentinelMaster);
+                                if ($pass) {
+                                    $redisMaster->auth($pass, $username);
+                                }
+                                $roleData = $redisMaster->role();
+                                if (! $roleData || $roleData[0] != 'master') {
+                                    throw new \Exception('Unable to determine master redis server.');
+                                }
                             }
                         }
-                    }
-                    if (($this->_dbNum || $persistent) && !$this->_useCluster) $redisMaster->select(0);
+                        if (($this->_dbNum || $persistent) && !$this->_useCluster) {
+                            $redisMaster->select(0);
+                        }
 
-                    $this->_redis = $redisMaster;
-                    break 2;
-                } catch (\Exception $e) {
-                    unset($sentinelClient);
-                    $exception = $e;
+                        $this->_redis = $redisMaster;
+                        break 2;
+                    } catch (\Exception $e) {
+                        unset($sentinelClient);
+                        $exception = $e;
+                    }
                 }
             }
             unset($sentinel);
 
-            if ( ! $this->_redis) {
+            if (! $this->_redis) {
                 throw new ConnectionFailedException('Unable to connect to a Redis: '.$exception->getMessage(), 0, $exception);
             }
-        }
-        else {
+        } else {
             if (($config instanceof ClusterConfigInterface) && ($config->isCluster())) {
                 $this->_redis = new \Credis_Cluster(
                     $config->getClusterName(),
@@ -403,7 +413,7 @@ class Handler implements \SessionHandlerInterface
         if ($this->_useCluster) {
             $this->_log(
                 sprintf(
-                    "%s initialized for connection to %s after %.5f seconds",
+                    '%s initialized for connection to %s after %.5f seconds',
                     get_class($this),
                     (!empty($this->_redis->getClusterSeeds())) ?
                         var_export($this->_redis->getClusterSeeds(), true) : $this->_redis->getClusterName(),
@@ -413,7 +423,7 @@ class Handler implements \SessionHandlerInterface
         } else {
             $this->_log(
                 sprintf(
-                    "%s initialized for connection to %s:%s after %.5f seconds",
+                    '%s initialized for connection to %s:%s after %.5f seconds',
                     get_class($this),
                     $this->_redis->getHost(),
                     $this->_redis->getPort(),
@@ -453,7 +463,7 @@ class Handler implements \SessionHandlerInterface
     {
         try {
             $this->_redis->connect();
-            $this->_log("Connected to Redis");
+            $this->_log('Connected to Redis');
             return true;
         } catch (\Exception $e) {
             $this->logger->logException($e);
@@ -491,11 +501,12 @@ class Handler implements \SessionHandlerInterface
         $detectZombies = false;
         $breakAfter = $this->_getBreakAfter();
         $timeStart = microtime(true);
-        $this->_log(sprintf("Attempting to take lock on ID %s", $sessionId));
+        $this->_log(sprintf('Attempting to take lock on ID %s', $sessionId));
 
-        if (!$this->_useCluster) $this->_redis->select($this->_dbNum);
-        while ($this->_useLocking && !$this->_readOnly)
-        {
+        if (!$this->_useCluster) {
+            $this->_redis->select($this->_dbNum);
+        }
+        while ($this->_useLocking && !$this->_readOnly) {
             // Increment lock value for this session and retrieve the new value
             $oldLock = $lock;
             $lock = $this->_redis->hIncrBy($sessionId, 'lock', 1);
@@ -506,7 +517,7 @@ class Handler implements \SessionHandlerInterface
             }
 
             // If we got the lock, update with our pid and reset lock and expiration
-            if (   $lock == 1                          // We actually do have the lock
+            if ($lock == 1                          // We actually do have the lock
                 || (
                     $tries >= $breakAfter   // We are done waiting and want to start trying to break it
                     && $oldLockPid == $lockPid        // Nobody else got the lock while we were waiting
@@ -517,7 +528,7 @@ class Handler implements \SessionHandlerInterface
             }
 
             // Otherwise, add to "wait" counter and continue
-            else if ( ! $waiting) {
+            elseif (! $waiting) {
                 $i = 0;
                 do {
                     $waiting = $this->_redis->hIncrBy($sessionId, 'wait', 1);
@@ -537,9 +548,10 @@ class Handler implements \SessionHandlerInterface
                         // Reset session to fresh state
                         $this->_log(
                             sprintf(
-                                "Detected zombie waiter after %.5f seconds for ID %s (%d waiting)",
+                                'Detected zombie waiter after %.5f seconds for ID %s (%d waiting)',
                                 (microtime(true) - $timeStart),
-                                $sessionId, $waiting
+                                $sessionId,
+                                $waiting
                             ),
                             LoggerInterface::INFO
                         );
@@ -586,7 +598,8 @@ class Handler implements \SessionHandlerInterface
             if ($tries % self::DETECT_ZOMBIES == 0) {
                 $this->_log(
                     sprintf(
-                        "Checking for zombies after %.5f seconds of waiting...", (microtime(true) - $timeStart)
+                        'Checking for zombies after %.5f seconds of waiting...',
+                        (microtime(true) - $timeStart)
                     )
                 );
 
@@ -596,8 +609,10 @@ class Handler implements \SessionHandlerInterface
                     $this->_redis->hSet($sessionId, 'lock', 0);
                     $this->_log(
                         sprintf(
-                            "Detected zombie process (%s) for %s (%s waiting)",
-                            $pid, $sessionId, $waiting
+                            'Detected zombie process (%s) for %s (%s waiting)',
+                            $pid,
+                            $sessionId,
+                            $waiting
                         ),
                         LoggerInterface::INFO
                     );
@@ -617,11 +632,10 @@ class Handler implements \SessionHandlerInterface
                     LoggerInterface::NOTICE
                 );
                 break;
-            }
-            else {
+            } else {
                 $this->_log(
                     sprintf(
-                        "Waiting %.2f seconds for lock on ID %s (%d tries, lock pid is %s, %.5f seconds elapsed)",
+                        'Waiting %.2f seconds for lock on ID %s (%d tries, lock pid is %s, %.5f seconds elapsed)',
                         $sleepTime / 1000000,
                         $sessionId,
                         $tries,
@@ -637,7 +651,7 @@ class Handler implements \SessionHandlerInterface
         // Session can be read even if it was not locked by this pid!
         $timeStart2 = microtime(true);
         [$sessionData, $sessionWrites] = array_values($this->_redis->hMGet($sessionId, ['data','writes']));
-        $this->_log(sprintf("Data read for ID %s in %.5f seconds", $sessionId, (microtime(true) - $timeStart2)));
+        $this->_log(sprintf('Data read for ID %s in %.5f seconds', $sessionId, (microtime(true) - $timeStart2)));
         $this->_sessionWrites = (int) $sessionWrites;
 
         // This process is no longer waiting for a lock
@@ -656,13 +670,13 @@ class Handler implements \SessionHandlerInterface
             if (empty($_SERVER['REQUEST_METHOD'])) {
                 $setData['req'] = @$_SERVER['SCRIPT_NAME'];
             } else {
-                $setData['req'] = $_SERVER['REQUEST_METHOD']." ".@$_SERVER['SERVER_NAME'].@$_SERVER['REQUEST_URI'];
+                $setData['req'] = $_SERVER['REQUEST_METHOD'].' '.@$_SERVER['SERVER_NAME'].@$_SERVER['REQUEST_URI'];
             }
             if ($lock != 1) {
                 $this->_log(
                     sprintf(
                         "Successfully broke lock for ID %s after %.5f seconds (%d attempts). Lock: %d\nLast request of "
-                            . "broken lock: %s",
+                            . 'broken lock: %s',
                         $sessionId,
                         (microtime(true) - $timeStart),
                         $tries,
@@ -677,10 +691,10 @@ class Handler implements \SessionHandlerInterface
             // Set session data and expiration
             $this->_redis->pipeline();
         }
-        if ( ! empty($setData)) {
+        if (! empty($setData)) {
             $this->_redis->hMSet($sessionId, $setData);
         }
-        $this->_redis->expire($sessionId, 3600*6); // Expiration will be set to correct value when session is written
+        $this->_redis->expire($sessionId, 3600 * 6); // Expiration will be set to correct value when session is written
         if ($this->_usePipeline) {
             $this->_redis->exec();
         }
@@ -700,7 +714,7 @@ class Handler implements \SessionHandlerInterface
     public function write($sessionId, $sessionData)
     {
         if ($this->_sessionWritten || $this->_readOnly) {
-            $this->_log(sprintf(($this->_sessionWritten ? "Repeated" : "Read-only") . " session write detected; skipping for ID %s", $sessionId));
+            $this->_log(sprintf(($this->_sessionWritten ? 'Repeated' : 'Read-only') . ' session write detected; skipping for ID %s', $sessionId));
             return true;
         }
         $this->_sessionWritten = true;
@@ -708,28 +722,30 @@ class Handler implements \SessionHandlerInterface
 
         // Do not overwrite the session if it is locked by another pid
         try {
-            if ($this->_dbNum && !$this->_useCluster) $this->_redis->select($this->_dbNum);  // Prevent conflicts with other connections?
+            if ($this->_dbNum && !$this->_useCluster) {
+                $this->_redis->select($this->_dbNum);
+            }  // Prevent conflicts with other connections?
 
-            if ( ! $this->_useLocking
-                || ( ! ($pid = $this->_redis->hGet('sess_'.$sessionId, 'pid')) || $pid == $this->_getPid())
+            if (! $this->_useLocking
+                || (! ($pid = $this->_redis->hGet('sess_'.$sessionId, 'pid')) || $pid == $this->_getPid())
             ) {
                 $this->_writeRawSession($sessionId, $sessionData, $this->getLifeTime());
-                $this->_log(sprintf("Data written to ID %s in %.5f seconds", $sessionId, (microtime(true) - $timeStart)));
+                $this->_log(sprintf('Data written to ID %s in %.5f seconds', $sessionId, (microtime(true) - $timeStart)));
 
-            }
-            else {
+            } else {
                 if ($this->_hasLock) {
-                    $this->_log(sprintf("Did not write session for ID %s: another process took the lock.",
+                    $this->_log(sprintf(
+                        'Did not write session for ID %s: another process took the lock.',
                         $sessionId
                     ), LoggerInterface::WARNING);
                 } else {
-                    $this->_log(sprintf("Did not write session for ID %s: unable to acquire lock.",
+                    $this->_log(sprintf(
+                        'Did not write session for ID %s: unable to acquire lock.',
                         $sessionId
                     ), LoggerInterface::WARNING);
                 }
             }
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->logException($e);
             return false;
         }
@@ -745,11 +761,13 @@ class Handler implements \SessionHandlerInterface
     #[\ReturnTypeWillChange]
     public function destroy($sessionId)
     {
-        $this->_log(sprintf("Destroying ID %s", $sessionId));
+        $this->_log(sprintf('Destroying ID %s', $sessionId));
         if ($this->_usePipeline) {
             $this->_redis->pipeline();
         }
-        if ($this->_dbNum && !$this->_useCluster) $this->_redis->select($this->_dbNum);
+        if ($this->_dbNum && !$this->_useCluster) {
+            $this->_redis->select($this->_dbNum);
+        }
         $this->_redis->unlink(self::SESSION_PREFIX.$sessionId);
         if ($this->_usePipeline) {
             $this->_redis->exec();
@@ -765,8 +783,10 @@ class Handler implements \SessionHandlerInterface
     #[\ReturnTypeWillChange]
     public function close()
     {
-        $this->_log("Closing connection");
-        if ($this->_redis) $this->_redis->close();
+        $this->_log('Closing connection');
+        if ($this->_redis) {
+            $this->_redis->close();
+        }
         return true;
     }
 
@@ -792,7 +812,7 @@ class Handler implements \SessionHandlerInterface
         return $this->failedLockAttempts;
     }
 
-    static public function isBotAgent($userAgent)
+    public static function isBotAgent($userAgent)
     {
         $isBot = !$userAgent || preg_match(self::BOT_REGEX, $userAgent);
 
@@ -818,10 +838,10 @@ class Handler implements \SessionHandlerInterface
             if ($botLifetime) {
                 $userAgent = empty($_SERVER['HTTP_USER_AGENT']) ? false : $_SERVER['HTTP_USER_AGENT'];
                 if (self::isBotAgent($userAgent)) {
-                    $this->_log(sprintf("Bot detected for user agent: %s", $userAgent));
+                    $this->_log(sprintf('Bot detected for user agent: %s', $userAgent));
                     $botFirstLifetime = is_null($this->config->getBotFirstLifetime()) ? self::DEFAULT_BOT_FIRST_LIFETIME : $this->config->getBotFirstLifetime();
                     if ($this->_sessionWrites <= 1 && $botFirstLifetime) {
-                        $lifeTime = $botFirstLifetime * (1+$this->_sessionWrites);
+                        $lifeTime = $botFirstLifetime * (1 + $this->_sessionWrites);
                     } else {
                         $lifeTime = $botLifetime;
                     }
@@ -832,7 +852,7 @@ class Handler implements \SessionHandlerInterface
             if ($lifeTime === null && $this->_sessionWrites <= 1) {
                 $firstLifetime = is_null($this->config->getFirstLifetime()) ? self::DEFAULT_FIRST_LIFETIME : $this->config->getFirstLifetime();
                 if ($firstLifetime) {
-                    $lifeTime = $firstLifetime * (1+$this->_sessionWrites);
+                    $lifeTime = $firstLifetime * (1 + $this->_sessionWrites);
                 }
             }
 
@@ -862,27 +882,32 @@ class Handler implements \SessionHandlerInterface
     {
         $originalDataSize = strlen($data);
         if ($this->_compressionThreshold > 0 && $this->_compressionLibrary != 'none' && $originalDataSize >= $this->_compressionThreshold) {
-            $this->_log(sprintf("Compressing %s bytes with %s", $originalDataSize,$this->_compressionLibrary));
+            $this->_log(sprintf('Compressing %s bytes with %s', $originalDataSize, $this->_compressionLibrary));
             $timeStart = microtime(true);
-            $prefix = ':'.substr($this->_compressionLibrary,0,2).':';
-            switch($this->_compressionLibrary) {
-                case 'snappy': $data = snappy_compress($data); break;
-                case 'lzf':    $data = lzf_compress($data); break;
-                case 'lz4':    $data = lz4_compress($data); $prefix = ':l4:'; break;
-                case 'gzip':   $data = gzcompress($data, 1); break;
+            $prefix = ':'.substr($this->_compressionLibrary, 0, 2).':';
+            switch ($this->_compressionLibrary) {
+                case 'snappy': $data = snappy_compress($data);
+                    break;
+                case 'lzf':    $data = lzf_compress($data);
+                    break;
+                case 'lz4':    $data = lz4_compress($data);
+                    $prefix = ':l4:';
+                    break;
+                case 'gzip':   $data = gzcompress($data, 1);
+                    break;
             }
             if ($data) {
                 $data = $prefix.$data;
                 $this->_log(
                     sprintf(
-                        "Data compressed by %.1f percent in %.5f seconds",
+                        'Data compressed by %.1f percent in %.5f seconds',
                         ($originalDataSize == 0 ? 0 : (100 - (strlen($data) / $originalDataSize * 100))),
                         (microtime(true) - $timeStart)
                     )
                 );
             } else {
                 $this->_log(
-                    sprintf("Could not compress session data using %s", $this->_compressionLibrary),
+                    sprintf('Could not compress session data using %s', $this->_compressionLibrary),
                     LoggerInterface::WARNING
                 );
             }
@@ -898,12 +923,16 @@ class Handler implements \SessionHandlerInterface
      */
     protected function _decodeData($data)
     {
-        switch (substr($data,0,4)) {
+        switch (substr($data, 0, 4)) {
             // asking the data which library it uses allows for transparent changes of libraries
-            case ':sn:': $data = snappy_uncompress(substr($data,4)); break;
-            case ':lz:': $data = lzf_decompress(substr($data,4)); break;
-            case ':l4:': $data = lz4_uncompress(substr($data,4)); break;
-            case ':gz:': $data = gzuncompress(substr($data,4)); break;
+            case ':sn:': $data = snappy_uncompress(substr($data, 4));
+                break;
+            case ':lz:': $data = lzf_decompress(substr($data, 4));
+                break;
+            case ':l4:': $data = lz4_uncompress(substr($data, 4));
+                break;
+            case ':gz:': $data = gzuncompress(substr($data, 4));
+                break;
         }
         return $data;
     }
@@ -922,7 +951,9 @@ class Handler implements \SessionHandlerInterface
         if ($this->_usePipeline) {
             $this->_redis->pipeline();
         }
-        if (!$this->_useCluster) $this->_redis->select($this->_dbNum);
+        if (!$this->_useCluster) {
+            $this->_redis->select($this->_dbNum);
+        }
         $this->_redis->hMSet($sessionId, [
                 'data' => $this->_encodeData($data),
                 'lock' => 0, // 0 so that next lock attempt will get 1
