@@ -253,8 +253,26 @@ class Handler implements \SessionHandlerInterface
      */
     protected $_lifeTime;
 
-    /** @var null|array Callback method to call. It will receive 2 parameters: $userAgent, $isBot */
-    public static $_botCheckCallback;
+    /**
+     * @var null|array Callback method to call. It will receive 2 parameters: $userAgent, $isBot
+     *
+     * Use setBotCheckCallback() to set this value. The property is private to prevent arbitrary
+     * third-party code from overriding the bot-detection behaviour without going through the
+     * validated setter.
+     */
+    private static $_botCheckCallback;
+
+    /**
+     * Set a custom bot-detection callback.
+     *
+     * The callback receives two parameters: (string $userAgent, bool $isBot).
+     *
+     * @param array{0: object, 1: string}|callable $callback
+     */
+    public static function setBotCheckCallback(callable $callback): void
+    {
+        self::$_botCheckCallback = $callback;
+    }
 
     /**
      * @var boolean
