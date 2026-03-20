@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /*
 ==New BSD License==
 
@@ -10,14 +10,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * The name of Colin Mollenhour may not be used to endorse or promote products
-      derived from this software without specific prior written permission.
-    * Redistributions in any form must not change the Cm_RedisSession namespace.
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+   * The name of Colin Mollenhour may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+   * Redistributions in any form must not change the Cm_RedisSession namespace.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,60 +29,50 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+*/
+namespace Cm\Redis_Session\Handler;
 
-namespace Cm\RedisSession\Handler;
-
-interface LoggerInterface
+interface Logger_Interface
 {
     /**
      * Emergency: system is unusable
      */
-    public const EMERGENCY     = 0;
-
+    public const EMERGENCY = 0;
     /**
      * Alert: action must be taken immediately
      */
-    public const ALERT         = 1;
-
+    public const ALERT = 1;
     /**
      * Critical: critical conditions
      */
-    public const CRITICAL      = 2;
-
+    public const CRITICAL = 2;
     /**
      * Error: error conditions
      */
-    public const ERROR         = 3;
-
+    public const ERROR = 3;
     /**
      * Warning: warning conditions
      */
-    public const WARNING       = 4;
-
+    public const WARNING = 4;
     /**
      * Notice: normal but significant condition
      */
-    public const NOTICE        = 5;
-
+    public const NOTICE = 5;
     /**
      * Informational: informational messages
      */
-    public const INFO          = 6;
-
+    public const INFO = 6;
     /**
      * Debug: debug messages
      */
-    public const DEBUG         = 7;
-
+    public const DEBUG = 7;
     /**
      * Set log level
      *
      * @param int $level
      * @return void
      */
-    public function setLogLevel($level);
-
+    public function set_log_level($level);
     /**
      * Log message
      *
@@ -92,11 +82,10 @@ interface LoggerInterface
      * @return void
      */
     public function log($message, $level);
-
     /**
      * Log exception
      *
      * @return void
      */
-    public function logException(\Exception $e);
+    public function log_exception(\Exception $e);
 }
